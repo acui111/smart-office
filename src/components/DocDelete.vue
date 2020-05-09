@@ -69,11 +69,12 @@
           //获取所有文档
           this.$http.get('/api/documents')
           .then(response=>{
+            const result = response.data;
             if (!result.successful) {
               return this.$message.error(result.message);
             }
-            const result = response.data.rows;
-            this.$events.emit('documentList',result);
+            const data = response.data.rows;
+            this.$events.emit('documentList',data);
             console.log('删除后刷新文档');
           })
         })
