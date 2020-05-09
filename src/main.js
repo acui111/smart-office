@@ -1,8 +1,36 @@
-import Vue from 'vue'
-import App from './App.vue'
+import Vue from 'vue';
+import VueRouter from 'vue-router';
+import axios from 'axios';
+import vueAxios from 'vue-axios';
+import Antd from 'ant-design-vue';
+import 'ant-design-vue/dist/antd.css';
 
-Vue.config.productionTip = false
+
+import App from './App.vue';
+import router from './router';
+import EventBus from "@/plugins/EventBus";
+Vue.config.productionTip = false;
+
+Vue.use(VueRouter);
+Vue.use(Antd);
+Vue.use(EventBus);
+Vue.use(vueAxios,axios);
+
+// 响应拦截
+axios.interceptors.response.use((response) => {
+  return response;
+  }, (error) => {
+    // 如果没有登录，重定向到登录页面
+    if (error.response.status == 401) {
+      return window.location.href = `/login?${window.location.href}`;
+    }else{
+      return Promise.reject(error);
+    }
+});
 
 new Vue({
   render: h => h(App),
+  router,
 }).$mount('#app')
+
+
