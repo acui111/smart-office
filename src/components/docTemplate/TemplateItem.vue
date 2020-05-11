@@ -7,7 +7,7 @@
 <script type="text/ecmascript-6">
   export default {
     name:'TemplateItem',
-    props:['url','fileType','callbackUrl','documentServer','thumbnail'],
+    props:['url','fileType','thumbnail'],
     methods:{
       // 选择模板
       selectTemplate(){
@@ -17,7 +17,18 @@
           if (!result.successful) {
             return this.$message.error(result.message);
           }
-          window.open(`${this.serverUrl}/editor?${result.data.id}`);
+          const serverUrl = `${window.location.protocol}//${window.location.host}`;
+          window.open(`${serverUrl}/editor?${result.data.id}`);
+          //获取所有文档
+          this.$http.get('/api/documents')
+          .then(response=>{
+            const result = response.data;
+            if (!result.successful) {
+              return this.$message.error(result.message);
+            }
+            const data = response.data.rows;
+            this.$events.emit('documentList',data);
+          })
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);
@@ -33,7 +44,6 @@
           return this.$message.error(result.message);
         }
         this.fileServer = result.data.fileServer;
-        this.serverUrl = 'http://localhost:8080';
       });
     }
   }

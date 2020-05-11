@@ -44,7 +44,7 @@
         <!-- 树状图 -->
         <a-tree
           checkable
-          :treeData="treeData"
+          :treeData="members"
           :expandedKeys="expandedKeys"
           :autoExpandParent="autoExpandParent"
           v-model="checkedKeys"
@@ -70,13 +70,13 @@
               color:rgba(102,102,102,1);
               margin-bottom:10px"
               >
-              {{item}}
+              {{item.title}}
             </div>
             <img 
               src="/image/choose_del.png" 
               alt="叉号" 
               style="width:16px;height:16px;margin-top:8px"
-              @click="delSelectedMember(item,index)"
+              @click="delSelectedMember(item.key)"
               >
           </div>
         </div>
@@ -97,52 +97,9 @@
       return{
         addMemberVisible:false,
         //可选择的全部成员
-        treeData:[
-          {
-            title:'全部成员',
-            key:'全部成员',
-            children:[
-              {
-                title:'总指挥室',
-                key:'总指挥室',
-                children:[
-                  {
-                    title:'总指挥',
-                    key:'总指挥',
-                  },
-                  {
-                    title:'导播1',
-                    key:'导播1',
-                  },
-                  {
-                    title:'导播2',
-                    key:'导播2',
-                  },
-                ]
-              },
-              {
-                title:'研讨组1',
-                key:'研讨组1',
-                children:[
-                  {
-                    title:'研讨组长',
-                    key:'研讨组长',
-                  },
-                  {
-                    title:'研讨成员1',
-                    key:'研讨成员1',
-                  },
-                  {
-                    title:'研讨成员2',
-                    key:'研讨成员2',
-                  },
-                ]
-              }
-            ]
-          }
-        ],
+        members:[],
         //展开指定的树节点
-        expandedKeys: ['总指挥室'],
+        expandedKeys: [],
         // 自动展开父节点
         autoExpandParent: true,
         //选中的要添加的成员(key值)
@@ -152,23 +109,42 @@
       }
     },
     mounted(){
-      this.$events.on('addMember',(data)=>{
-        this.addMemberVisible = data;
+      //展示添加成员遮罩
+      this.$events.on('addMember',(addMemberVisible)=>{
+        this.addMemberVisible = addMemberVisible;
+      });
+      //获取所有文档成员
+      this.$http.get('/api/members')
+      .then(response=>{
+        const result = response.data;
+        if (!result.successful) {
+          return this.$message.error(result.message);
+        }
+        this.members = result.data;
+      })
+      .catch(error=>{
+        this.$message.error(error.response.data.message);
       })
     },
     methods:{
       //关闭添加成员
       closeAddMember(){
+        //关闭添加成员的遮罩
         this.addMemberVisible = false;
+        //隐藏共享设置的遮罩
         this.$events.emit('closeSetModal',false);
       },
       //确认
       confirm(){
+        //关闭添加成员的遮罩
         this.addMemberVisible = false;
+        //隐藏共享设置的遮罩
         this.$events.emit('closeSetModal',false);
+        console.log('发送请求前选中的key',this.checkedKeys);
       },
       //取消
       cancel(){
+        //关闭添加成员的遮罩
         this.addMemberVisible = false;
       },
       //展开/收起节点
@@ -180,33 +156,40 @@
       onCheck(checkedKeys) {
         this.checkedKeys = checkedKeys;
       },
-      //右侧已选中的成员
-      delSelectedMember(item,index){
-        this.checkedKeys.splice(index,1);
-        console.log('点击关闭选中的成员',item);
+      //去除右侧已选中的成员
+      delSelectedMember(key){
+        const k = _.split(key,'-',1);
+        _.forEach(this.checkedKeys,(checkedKey,index)=>{
+          if (checkedKey == key || checkedKey == k) {
+            this.checkedKeys.splice(index,1);
+          }
+        });
       },
     },
     //深度监视选中框的状态
     watch: {
-      checkedKeys(val) {
-        this.selectedMember = val;
-        _.forEach(this.selectedMember,member=>{
-          _.forEach(this.treeData,item=>{
-            _.forEach(item.children,childrenItem=>{
-              if (member == item.key || member == childrenItem.key) {
-                // console.log('找到需要移除的层级',member);
-                _.remove(this.selectedMember,value=>{
-                  //返回移除元素组成的新数组
-                  return value == member;
-                })
-              }
-            })
+      checkedKeys(key) {
+        const members = _.map(this.members,(member,index)=>{
+          return member.children;
+        });
+        const memberList = [];
+        _.forEach(members,(members,index)=>{
+          _.forEach(members,(member,index)=>{
+            memberList.push(member);
           })
         })
-      },
-    },
+        const selectedMember = [];
+        _.forEach(key,(key,index)=>{
+          _.forEach(memberList,(member,index)=>{
+            if (key == member.key) {
+              selectedMember.push(member);
+            }
+          })
+        })
+        this.selectedMember = _.uniq(selectedMember);
+      }
+    }
   }
-  
 </script>
   
 <style scoped>

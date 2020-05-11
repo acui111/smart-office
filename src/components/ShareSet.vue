@@ -51,15 +51,11 @@
           
           <!-- 每一个文档成员 -->
           <div style='width:100%;height:280px;padding:0 20px;overflow-y:auto'>
-            <div style="display:flex;justify-content:space-between;width:100%;height:32px;line-height:32px">
-              <p style="font-size:14px;color:rgba(102,102,102,1),margin:0">我</p>
-              <p style="font-size:14px;color:rgba(102,102,102,1);margin-right:26px">创建者</p>
-            </div>
-            
             <div v-for="(item,index) in docMember " :key="index">
               <DocMember
                 :id="item.id"
-                :name="item.name"
+                :name="item.username"
+                :owner="item.owner"
                 />
             </div>
 
@@ -77,25 +73,13 @@
 <script type="text/ecmascript-6">
   import DocMember from './DocMember';
   import MemberAdd from './MemberAdd';
+  import _ from 'lodash';
   export default {
     name:'ShareSet',
     data(){
       return{
         shareSetVisible:false,
-        docMember:[
-          {
-            id:1,
-            name:'成员1',
-          },
-          {
-            id:2,
-            name:'成员2',
-          },
-          {
-            id:3,
-            name:'成员3',
-          },
-        ]
+        docMember:[],
       }
     },
     components:{
@@ -104,9 +88,9 @@
     },
     mounted(){
       //共享设置显示
-      this.$events.on('shareSetVisible',({shareSetVisible,id})=>{
+      this.$events.on('shareSetVisible',({shareSetVisible,id,permissions})=>{
         this.shareSetVisible = shareSetVisible;
-        console.log('共享设置显示',id);
+        this.docMember = _.values(permissions);
       });
       //共享设置关闭
       this.$events.on('closeSetModal',(data)=>{

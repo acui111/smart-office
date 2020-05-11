@@ -32,6 +32,7 @@
         <a-input
           @keyup.enter="submit"
           @focus="focus($event)"
+          @blur="blur($event)"
           v-model="resetName"
           :auto-focus=true
           style="width:200px;height:30px;padding:0 4px;font-size:16px"
@@ -50,12 +51,23 @@
         v-show="rightClickMenuShow"
         ref="set"
         >
-        <p @click="toSetModal">共享设置</p>
-        <p @click="toEdit">编辑</p>
-        <p @click="download">下载</p>
-        <p @click="removeDoc">删除</p>
-        <p @click="rename">重命名</p>
-        <p @click="shareLink">分享链接</p>
+        <template v-if="status">
+          <p @click="toSetModal">共享设置</p>
+          <p @click="toEdit">编辑</p>
+          <p @click="download">下载</p>
+          <p @click="removeDoc">删除</p>
+          <p @click="resetname">重命名</p>
+          <p 
+            :data-clipboard-text='openUrl'
+            ref="shareLink"
+            >
+            分享链接
+          </p>
+        </template>
+        <template v-else>
+          <p @click="resetDoc">还原</p>
+          <p @click="hardRemoveDoc">删除</p>
+        </template>
       </div>
 
       <!-- 多功能按键 -->
@@ -72,12 +84,23 @@
         v-show="clickIconMenuShow" 
         ref="iconMenuSet"
         >
-        <p @click="toSetModal">共享设置</p>
-        <p @click="toEdit">编辑</p>
-        <p @click="download">下载</p>
-        <p @click="removeDoc">删除</p>
-        <p @click="rename">重命名</p>
-        <p @click="shareLink">分享链接</p>
+        <template v-if="status">
+          <p @click="toSetModal">共享设置</p>
+          <p @click="toEdit">编辑</p>
+          <p @click="download">下载</p>
+          <p @click="removeDoc">删除</p>
+          <p @click="resetname">重命名</p>
+          <p 
+            :data-clipboard-text='openUrl'
+            ref="shareLink"
+            >
+            分享链接
+          </p>
+        </template>
+        <template v-else>
+          <p @click="resetDoc">还原</p>
+          <p @click="hardRemoveDoc">删除</p>
+        </template>
       </div>
 
     </div>
@@ -85,15 +108,13 @@
 </template>
   
 <script type="text/ecmascript-6">
-import DocDelete from '../DocDelete';
 import moment from 'moment';
 moment.locale('zh-cn');
+import ClipboardJS from 'clipboard';
+import _ from 'lodash';
   export default {
     name:'DocItem',
-    props:['id','fileType','title','url','modifyTime','ownerName'],
-    components:{
-      DocDelete
-    },
+    props:['id','fileType','title','url','modifyTime','ownerName','status','permissions'],
     data(){
       return{
         //多功能按钮
@@ -105,14 +126,17 @@ moment.locale('zh-cn');
         //重命名的输入框
         inputShow:false,
         //重命名输入框的取值
-        resetName:this.title,
+        resetName:'',
         //共享标记
         shareShow:false,
         //文档标记
         docTitleSrc:'',
+        //
+        openUrl:`${window.location.protocol}//${window.location.host}/editor?${this.id}`,
       }
     },
     methods:{
+
       //右键显示多功能按键
       rightClick(event){
         this.rightClickMenuShow = true;
@@ -134,41 +158,104 @@ moment.locale('zh-cn');
         }
       },
 
+      //获取所有的文档
+      getAllDoc(){
+        this.$http.get('/api/documents')
+        .then(response=>{
+          const result = response.data;
+          if (!result.successful) {
+            return this.$message.error(result.message);
+          }
+          const data = response.data.rows;
+          this.$events.emit('documentList',data);
+        })
+      },
+
       //共享设置
       toSetModal(){
-        this.$events.emit('shareSetVisible',{'shareSetVisible':true,'id':this.id});
+        this.$events.emit('shareSetVisible',{'shareSetVisible':true,'id':this.id,'permissions':this.permissions});
         this.clickIconMenuShow = false;
         this.rightClickMenuShow = false;
       },
 
-       //编辑
+      //编辑
       toEdit(){
-        window.open(`${this.serverUrl}/editor?${this.id}`);
+        window.open(this.openUrl);
       },
 
       //下载
       download(){
         console.log('正在下载文件');
+        this.downloadUrlFile(this.url,this.title);
+      },
+      // 下载文件
+      downloadUrlFile(url,filename) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'blob';
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            var url = URL.createObjectURL(xhr.response);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename; 
+            a.click();
+          }
+        };
+        xhr.send();
       },
 
       //删除文档
       removeDoc(){
-        this.$events.emit('removeDoc',{'removeDocVisible':true,'id':this.id});
+        this.$warning({
+          title:'提示',
+          content: '删除后的文档可从回收站找回',
+          okText: '确认',
+          cancelText: '取消',
+          onOk:()=>{
+            this.$http.put(`/api/documents/${this.id}/status`,{status:0})
+            .then(response=>{
+              const result = response.data;
+              if (!result.successful) {
+                return this.$message.error(result.message);
+              }
+              //获取所有文档
+              this.getAllDoc();
+            })
+            .catch(error=>{
+              this.$message.error(error.response.data.message);
+            })
+          },
+          onCancel() {},
+        });
         this.clickIconMenuShow = false;
         this.rightClickMenuShow = false;
       },
 
       //重命名
-      rename(){
-        this.resetName = this.title;
+      resetname(){
+        this.resetName = _.replace(this.title,`.${this.fileType}`,'');
         console.log('点击重命名');
         this.inputShow = true;
       },
-      //enter键更改名字
-      submit(){
+      //更改名字
+      blur(){
+        this.resetName = _.trim(this.resetName);
         if (this.resetName) {
-          console.log('确认更改名字为',this.resetName);
-          this.inputShow = false;
+          this.resetName = `${this.resetName}.${this.fileType}`
+          this.$http.put(`/api/documents/${this.id}`,{title:this.resetName})
+          .then(response=>{
+            const result = response.data;
+            if (!result.successful) {
+              return this.$message.error(result.message);
+            }
+            this.inputShow = false;
+            const data = response.data.rows;
+            this.$events.emit('documentList',data);
+          })
+          .catch(error=>{
+            this.$message.error(error.response.data.message);
+          })
         }else{
           this.$message.error('文档名不能为空');
         }
@@ -177,13 +264,47 @@ moment.locale('zh-cn');
       focus(event) {
         event.currentTarget.select();
       },
-      
-      //分享链接
-      shareLink(){
-        this.shareShow = true;
-        console.log('正在分享链接');
+
+      //回收站强制删除
+      hardRemoveDoc(){
+        this.$warning({
+          title:'提示',
+          content: '文件将会被永久删除',
+          okText: '确认',
+          cancelText: '取消',
+          onOk:()=>{
+            this.$http.delete(`/api/documents/${this.id}`)
+            .then(response=>{
+              const result = response.data;
+              if (!result.successful) {
+                return this.$message.error(result.message);
+              }
+              //获取所有文档
+              this.getAllDoc();
+            })
+            .catch(error=>{
+              this.$message.error(error.response.data.message);
+            })
+          },
+          onCancel() {},
+        });
       },
 
+      //回收站还原文档
+      resetDoc(){
+        this.$http.put(`/api/documents/${this.id}/status`,{status:1})
+        .then(response=>{
+          const result = response.data;
+          if (!result.successful) {
+            return this.$message.error(result.message);
+          }
+          //获取所有文档
+          this.getAllDoc();
+        })
+        .catch(error=>{
+          this.$message.error(error.response.data.message);
+        })
+      },
 
       //鼠标移入时
       mouseenter(){
@@ -212,18 +333,15 @@ moment.locale('zh-cn');
         }
       }
     },
+    
     mounted(){
-      // 获取文件服务器地址
-      this.$http.get('/api/configs')
-      .then((response)=>{
-        const result = response.data;
-        if (!result.successful) {
-          return this.$message.error(result.message);
-        }
-        this.fileServer = result.data.fileServer;
-        this.serverUrl = 'http://localhost:8080';
+      const clipboard = new ClipboardJS(this.$refs['shareLink']);
+      clipboard.on('success',(e)=> {
+        this.$message.success('链接已复制到剪切板');
+        e.clearSelection();
       });
-    }
+    },
+
   }
 </script>
   

@@ -36,6 +36,8 @@
         :title="document.title"
         :url="document.url"
         :modifyTime="document.modifyTime"
+        :status="document.status"
+        :permissions="document.permissions"
         />
     </div>
 
@@ -68,7 +70,7 @@
           // 我创建的文档
           owner:1,
           // 当前文档是否有效
-          yn:1, 
+          status:1, 
         },
       }
     },
@@ -78,25 +80,25 @@
         if (seleted === 'create') {
           console.log('选择我创建的文档');
           this.filters.owner = 1;
-          this.filters.yn = 1;
+          this.filters.status = 1;
           this.changePagination(1,10);
         }
         else if(seleted === 'recycle'){
           console.log('选择回收站');
           this.filters.owner = 1;
-          this.filters.yn = 0;
+          this.filters.status = 0;
           this.changePagination(1,10);
         }
         else{
           console.log('选择全部文档');
           this.filters.owner = 0;
-          this.filters.yn = 1;
+          this.filters.status = 1;
           this.changePagination(1,10);
         }
       },
       //切换分页
       changePagination(page,pageSize){
-        const url = `/api/documents?start=${(page - 1)* pageSize}&limit=${pageSize}&owner=${this.filters.owner}&yn=${this.filters.yn}`;
+        const url = `/api/documents?start=${(page - 1)* pageSize}&limit=${pageSize}&owner=${this.filters.owner}&status=${this.filters.status}`;
         this.$http.get(url)
         .then(response=>{
           const result = response.data;

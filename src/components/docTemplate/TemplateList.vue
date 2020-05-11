@@ -5,8 +5,6 @@
         :thumbnail="template.thumbnail"
         :url="template.url"
         :fileType="template.fileType"
-        :callbackUrl="template.callbackUrl"
-        :documentServer="template.documentServer"
         />
     </div>
   </div>

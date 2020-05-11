@@ -6,7 +6,6 @@
     </div>
     <DocList />
     <ShareSet />
-    <DocDelete />
   </div>
 </template>
 
@@ -15,20 +14,13 @@ import DocAction from '../components/DocAction'
 import TemplateList from '../components/docTemplate/TemplateList'
 import DocList from '../components/allDoc/DocList'
 import ShareSet from '../components/ShareSet'
-import DocDelete from '../components/DocDelete'
   export default {
     name:'Project',
-    data(){
-      return {
-        
-      }
-    },
     components:{
       DocAction,
       TemplateList,
       DocList,
-      ShareSet,
-      DocDelete
+      ShareSet
     },
 
     mounted(){

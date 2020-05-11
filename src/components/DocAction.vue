@@ -4,7 +4,6 @@
     <div 
       class="add-word" 
       @click="toEditWord" 
-      :class="{active:this.selected == 'word'}"
         >
       <img src="/image/icon_word.png" alt="新建文档">
       <span>新建文档</span>
@@ -13,7 +12,6 @@
     <div 
       class="add-excel" 
       @click="toEditExcel" 
-      :class="{active:this.selected == 'excel'}"
         >
       <img src="/image/icon_excel.png" alt="新建表格">
       <span>新建表格</span>
@@ -22,7 +20,6 @@
     <div 
       class="add-ppt" 
       @click="toEditPPT" 
-      :class="{active:this.selected == 'ppt'}"
         >
       <img src="/image/icon_ppt.png" alt="新建演示">
       <span>新建演示</span>
@@ -30,7 +27,6 @@
     <!-- 上传文件 -->
     <div 
       class="upload-doc" 
-      :class="{active:this.selected == 'upload'}"
       >
       <a-upload
         name="hfs"
@@ -54,9 +50,7 @@
     name:'TypeList',
     data(){
       return{
-        selected: "",
         fileServer:'',
-        serverUrl:'',
       }
     },
     methods:{
@@ -68,9 +62,9 @@
           if (!result.successful) {
             return this.$message.error(result.message);
           }
-          this.$message.success("新建文档成功");
           this.$events.emit('documentList');
-          window.open(`${this.serverUrl}/editor?${result.data.id}`);
+          const serverUrl = `${window.location.protocol}//${window.location.host}`;
+          window.open(`${serverUrl}/editor?${result.data.id}`);
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);
@@ -84,9 +78,9 @@
           if (!result.successful) {
             return this.$message.error(result.message);
           }
-          this.$message.success("新建表格成功");
           this.$events.emit('documentList');
-          window.open(`${this.serverUrl}/editor?${result.data.id}`);
+          const serverUrl = `${window.location.protocol}//${window.location.host}`;
+          window.open(`${serverUrl}/editor?${result.data.id}`);
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);
@@ -100,9 +94,9 @@
           if (!result.successful) {
             return this.$message.error(result.message);
           }
-          this.$message.success("新建演示成功");
           this.$events.emit('documentList');
-          window.open(`${this.serverUrl}/editor?${result.data.id}`);
+          const serverUrl = `${window.location.protocol}//${window.location.host}`;
+          window.open(`${serverUrl}/editor?${result.data.id}`);
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);
@@ -137,7 +131,6 @@
           return this.$message.error(result.message);
         }
         this.fileServer = result.data.fileServer;
-        this.serverUrl = 'http://localhost:8080';
       });
     }
   }
