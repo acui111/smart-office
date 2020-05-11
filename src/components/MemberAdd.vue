@@ -169,24 +169,25 @@
     //深度监视选中框的状态
     watch: {
       checkedKeys(key) {
-        const members = _.map(this.members,(member,index)=>{
-          return member.children;
-        });
-        const memberList = [];
-        _.forEach(members,(members,index)=>{
-          _.forEach(members,(member,index)=>{
-            memberList.push(member);
-          })
-        })
-        const selectedMember = [];
-        _.forEach(key,(key,index)=>{
-          _.forEach(memberList,(member,index)=>{
-            if (key == member.key) {
-              selectedMember.push(member);
-            }
-          })
-        })
-        this.selectedMember = _.uniq(selectedMember);
+        // const members = _.map(this.members,(member,index)=>{
+        //   return member.children;
+        // });
+        // const memberList = [];
+        // _.forEach(members,(members,index)=>{
+        //   _.forEach(members,(member,index)=>{
+        //     memberList.push(member);
+        //   })
+        // })
+        // const selectedMember = [];
+        // _.forEach(key,(key,index)=>{
+        //   _.forEach(memberList,(member,index)=>{
+        //     if (key == member.key) {
+        //       selectedMember.push(member);
+        //     }
+        //   })
+        // })
+        // this.selectedMember = _.uniq(selectedMember);
+        // console.log('选中的成员',this.selectedMember);
       }
     }
   }

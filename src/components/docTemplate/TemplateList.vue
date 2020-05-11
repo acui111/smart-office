@@ -34,7 +34,7 @@ import TemplateItem from './TemplateItem'
         this.templateList = response.data.data;
       })
       .catch(error=>{
-        tthis.$message.error(error.response.data.message);
+        this.$message.error(error.response.data.message);
       })
     }
   }

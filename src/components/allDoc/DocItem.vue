@@ -1,9 +1,8 @@
 <template>
-  <div @click="clickDocItem">
+  <div>
     <div
       :id="id"
       class="doc-item" 
-      @contextmenu.prevent="rightClick" 
       @mouseenter="mouseenter"
       @mouseleave="mouseleave"
       ref="doc-item"
@@ -30,7 +29,6 @@
       <!-- 重命名的iuput框 -->
       <div class="doc-name" v-if="inputShow">
         <a-input
-          @keyup.enter="submit"
           @focus="focus($event)"
           @blur="blur($event)"
           v-model="resetName"
@@ -44,31 +42,6 @@
 
       <!-- 文档创建者 -->
       <div class="creator">{{ownerName}}</div>
-
-      <!-- 右键多功能设置 -->
-      <div 
-        class="set" 
-        v-show="rightClickMenuShow"
-        ref="set"
-        >
-        <template v-if="status">
-          <p @click="toSetModal">共享设置</p>
-          <p @click="toEdit">编辑</p>
-          <p @click="download">下载</p>
-          <p @click="removeDoc">删除</p>
-          <p @click="resetname">重命名</p>
-          <p 
-            :data-clipboard-text='openUrl'
-            ref="shareLink"
-            >
-            分享链接
-          </p>
-        </template>
-        <template v-else>
-          <p @click="resetDoc">还原</p>
-          <p @click="hardRemoveDoc">删除</p>
-        </template>
-      </div>
 
       <!-- 多功能按键 -->
       <div @click="clickIconMenu" class="icon-menu">
@@ -91,7 +64,8 @@
           <p @click="removeDoc">删除</p>
           <p @click="resetname">重命名</p>
           <p 
-            :data-clipboard-text='openUrl'
+            @click="shareLink"
+            :data-clipboard-text="openUrl"
             ref="shareLink"
             >
             分享链接
@@ -119,8 +93,6 @@ import _ from 'lodash';
       return{
         //多功能按钮
         iconMenu:false,
-        //右键
-        rightClickMenuShow:false,
         //单击多功能按钮
         clickIconMenuShow:false,
         //重命名的输入框
@@ -137,18 +109,6 @@ import _ from 'lodash';
     },
     methods:{
 
-      //右键显示多功能按键
-      rightClick(event){
-        this.rightClickMenuShow = true;
-        const top = event.currentTarget.getBoundingClientRect().top;
-        if (top >= 700 && this.rightClickMenuShow) {
-          this.$refs.set.style.top = '-390%';
-        };
-      },
-      //左键隐藏多功能按键
-      clickDocItem(){
-        this.rightClickMenuShow = false;
-      },
       //点击按钮显示多功能按键
       clickIconMenu(event){
         this.clickIconMenuShow = !this.clickIconMenuShow;
@@ -175,18 +135,19 @@ import _ from 'lodash';
       toSetModal(){
         this.$events.emit('shareSetVisible',{'shareSetVisible':true,'id':this.id,'permissions':this.permissions});
         this.clickIconMenuShow = false;
-        this.rightClickMenuShow = false;
       },
 
       //编辑
       toEdit(){
-        window.open(this.openUrl);
+        window.open(`${window.location.protocol}//${window.location.host}/editor?${this.id}`);
+        this.clickIconMenuShow = false;
       },
 
       //下载
       download(){
         console.log('正在下载文件');
         this.downloadUrlFile(this.url,this.title);
+        this.clickIconMenuShow = false;
       },
       // 下载文件
       downloadUrlFile(url,filename) {
@@ -229,7 +190,6 @@ import _ from 'lodash';
           onCancel() {},
         });
         this.clickIconMenuShow = false;
-        this.rightClickMenuShow = false;
       },
 
       //重命名
@@ -237,6 +197,7 @@ import _ from 'lodash';
         this.resetName = _.replace(this.title,`.${this.fileType}`,'');
         console.log('点击重命名');
         this.inputShow = true;
+        this.clickIconMenuShow = false;
       },
       //更改名字
       blur(){
@@ -263,6 +224,11 @@ import _ from 'lodash';
       //获取焦点选中文字
       focus(event) {
         event.currentTarget.select();
+      },
+
+      //分享链接
+      shareLink(){
+        this.clickIconMenuShow = false;
       },
 
       //回收站强制删除
