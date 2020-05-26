@@ -5,7 +5,7 @@
       class="add-word" 
       @click="toEditWord" 
         >
-      <img src="/image/icon_word.png" alt="新建文档">
+      <img src="/smart-office/image/icon_word.png" alt="新建文档">
       <span>新建文档</span>
     </div>
     <!-- 新建表格 -->
@@ -13,7 +13,7 @@
       class="add-excel" 
       @click="toEditExcel" 
         >
-      <img src="/image/icon_excel.png" alt="新建表格">
+      <img src="/smart-office/image/icon_excel.png" alt="新建表格">
       <span>新建表格</span>
     </div>
     <!-- 新建演示 -->
@@ -21,7 +21,7 @@
       class="add-ppt" 
       @click="toEditPPT" 
         >
-      <img src="/image/icon_ppt.png" alt="新建演示">
+      <img src="/smart-office/image/icon_ppt.png" alt="新建演示">
       <span>新建演示</span>
     </div>
     <!-- 上传文件 -->
@@ -33,10 +33,10 @@
         accept='.doc,.docx,.ppt,.pptx,.xls,.xlsx,.pdf'
         :multiple="false"
         :showUploadList="false"
-        :action="fileServer"
-        @change="uploadDoc"
+        action="http://smart.ztzl.com/smart-hfs"
+        @change="onUploaded"
         >
-      <img src="/image/icon_upload.png" alt="上传文件">
+      <img src="/smart-office/image/icon_upload.png" alt="上传文件">
       <span>上传文件</span>
       </a-upload>
     </div>
@@ -50,21 +50,21 @@
     name:'TypeList',
     data(){
       return{
-        fileServer:'',
+        templateList:[],
       }
     },
     methods:{
       //新建文档
       toEditWord(){
-        this.$http.post('/api/documents',{fileType:'docx'})
+        const template = _.find(this.templateList,{name:'新建文档'});
+        this.$http.post('http://smart-api.ztzl.com/smart-office/api/documents',{type:'text',name:template.name,url:template.url})
         .then(response=>{
           const result = response.data;
           if (!result.successful) {
             return this.$message.error(result.message);
           }
-          this.$events.emit('documentList');
-          const serverUrl = `${window.location.protocol}//${window.location.host}`;
-          window.open(`${serverUrl}/editor?${result.data.id}`);
+          // this.$events.emit('documentList');
+          window.open(`http://smart.ztzl.com/smart-office/#/editor/${result.data.id}`);
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);
@@ -72,15 +72,15 @@
       },
       //新建表格
       toEditExcel(){
-        this.$http.post('/api/documents',{fileType:'xlsx'})
+        const template = _.find(this.templateList,{name:'新建表格'});
+        this.$http.post('http://smart-api.ztzl.com/smart-office/api/documents',{type:'spreadsheet',name:template.name,url:template.url})
         .then(response=>{
           const result = response.data;
           if (!result.successful) {
             return this.$message.error(result.message);
           }
           this.$events.emit('documentList');
-          const serverUrl = `${window.location.protocol}//${window.location.host}`;
-          window.open(`${serverUrl}/editor?${result.data.id}`);
+          window.open(`http://smart.ztzl.com/smart-office/#/editor/${result.data.id}`);
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);
@@ -88,26 +88,31 @@
       },
       //新建PPT
       toEditPPT(){
-        this.$http.post('/api/documents',{fileType:'pptx'})
+        const template = _.find(this.templateList,{name:'新建演示'});
+        this.$http.post('http://smart-api.ztzl.com/smart-office/api/documents',{type:'presentation',name:template.name,url:template.url})
         .then(response=>{
           const result = response.data;
           if (!result.successful) {
             return this.$message.error(result.message);
           }
           this.$events.emit('documentList');
-          const serverUrl = `${window.location.protocol}//${window.location.host}`;
-          window.open(`${serverUrl}/editor?${result.data.id}`);
+          window.open(`http://smart.ztzl.com/smart-office/#/editor/${result.data.id}`);
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);
         });
       },
       //上传文件
-      uploadDoc(info){
+      onUploaded(info){
         const {status,response,name} = info.file
+        const type = this.getDocmentType(name);
+        if (!type) {
+          return this.$message.error('不支持的文件格式');
+        }
         if (status === 'done') {
-          this.$http.post('/api/documents',{
-            title:response.originalname,
+          this.$http.post('http://smart-api.ztzl.com/smart-office/api/documents',{
+            type,
+            name:response.originalname,
             url:response.filename
             })
           .then(response=>{
@@ -122,16 +127,43 @@
           this.$message.error(`${name}上传失败`);
         }
       },
+      getDocmentType(filename){
+        const index = filename.lastIndexOf(".");
+        const extname = filename.substr(index+1);
+        switch (extname) {
+          case 'docx':
+          case 'doc':
+          case 'odt':
+          case 'txt':
+          case 'pdf':
+            return 'text';
+          
+          case 'xlsx':
+          case 'xls':
+          case 'ods':
+          case 'csv':
+            return 'spreadsheet';
+
+          case 'pptx':
+          case 'ppt':
+          case 'odp':
+            return 'presentation';
+
+        }
+      }
     },
     mounted(){
-      this.$http.get('/api/configs')
-      .then((response)=>{
+      this.$http.get('http://smart-api.ztzl.com/smart-office/api/templates')
+      .then(response=>{
         const result = response.data;
         if (!result.successful) {
           return this.$message.error(result.message);
         }
-        this.fileServer = result.data.fileServer;
-      });
+        this.templateList = response.data.data;
+      })
+      .catch(error=>{
+        this.$message.error(error.response.data.message);
+      })
     }
   }
 </script>

@@ -27,13 +27,17 @@ module.exports = {
       }
     },
   },
+  // devServer: {
+  //   proxy: {
+  //     '/api/': {
+  //       target: 'http://10.144.176.172:8080',
+  //       ws: true,
+  //       changeOrigin: true
+  //     },
+  //   }
+  // }
   devServer: {
-    proxy: {
-      '/api/': {
-        target: 'http://10.144.176.172:8080',
-        ws: true,
-        changeOrigin: true
-      },
-    }
-  }
+    disableHostCheck: true
+  },
+  publicPath:'/smart-office/'
 }

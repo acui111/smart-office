@@ -12,14 +12,14 @@
       <div class="doc-name" v-if="!inputShow">
         <!-- 文档标记 -->
         <img 
-          :src="fileType | formatType" 
+          :src=" url | formatType" 
           alt="文档标记" 
           style="margin-right:6px;vertical-align:text-bottom;width:20px;height:24px"
           >
-        {{title}}
+        {{name}}
         <!-- 共享标记 -->
         <img 
-          src="/image/button_Share.png" 
+          src="/smart-office/image/button_Share.png" 
           v-if="shareShow"
           alt="共享标记"
           style="width:50px;height:19px;margin-left:10px"
@@ -47,7 +47,7 @@
       <div @click="clickIconMenu" class="icon-menu">
         <img
           v-if="iconMenu"
-          src="/image/icon_menu.png"
+          src="/smart-office/image/icon_menu.png"
           alt="多功能按键"
           >
       </div>
@@ -88,7 +88,7 @@ import ClipboardJS from 'clipboard';
 import _ from 'lodash';
   export default {
     name:'DocItem',
-    props:['id','fileType','title','url','modifyTime','ownerName','status','permissions'],
+    props:['id','type','name','url','modifyTime','ownerName','status','permissions'],
     data(){
       return{
         //多功能按钮
@@ -104,10 +104,14 @@ import _ from 'lodash';
         //文档标记
         docTitleSrc:'',
         //
-        openUrl:`${window.location.protocol}//${window.location.host}/editor?${this.id}`,
+        openUrl:`http://smart.ztzl.com/smart-office/#/editor/${this.id}`,
       }
     },
     methods:{
+      getDocmentType(url){
+        const index = url.lastIndexOf(".");
+        return url.substr(index+1);
+      },
 
       //点击按钮显示多功能按键
       clickIconMenu(event){
@@ -120,7 +124,7 @@ import _ from 'lodash';
 
       //获取所有的文档
       getAllDoc(){
-        this.$http.get('/api/documents')
+        this.$http.get('http://smart-api.ztzl.com/smart-office/api/documents')
         .then(response=>{
           const result = response.data;
           if (!result.successful) {
@@ -139,27 +143,28 @@ import _ from 'lodash';
 
       //编辑
       toEdit(){
-        window.open(`${window.location.protocol}//${window.location.host}/editor?${this.id}`);
+        window.open(`http://smart.ztzl.com/smart-office/#/editor/${this.id}`);
         this.clickIconMenuShow = false;
       },
 
       //下载
       download(){
-        console.log('正在下载文件');
-        this.downloadUrlFile(this.url,this.title);
+        this.downloadUrlFile(this.url,this.name);
         this.clickIconMenuShow = false;
       },
       // 下载文件
-      downloadUrlFile(url,filename) {
+      downloadUrlFile(url,name) {
+        const type = this.getDocmentType(url);
         const xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
         xhr.responseType = 'blob';
         xhr.onload = () => {
           if (xhr.status === 200) {
+            const newName = name + '.' + type;
             var url = URL.createObjectURL(xhr.response);
             var a = document.createElement('a');
             a.href = url;
-            a.download = filename; 
+            a.download = newName; 
             a.click();
           }
         };
@@ -174,7 +179,7 @@ import _ from 'lodash';
           okText: '确认',
           cancelText: '取消',
           onOk:()=>{
-            this.$http.put(`/api/documents/${this.id}/status`,{status:0})
+            this.$http.put(`http://smart-api.ztzl.com/smart-office/api/documents/${this.id}/status`,{status:0})
             .then(response=>{
               const result = response.data;
               if (!result.successful) {
@@ -204,7 +209,7 @@ import _ from 'lodash';
         this.resetName = _.trim(this.resetName);
         if (this.resetName) {
           this.resetName = `${this.resetName}.${this.fileType}`
-          this.$http.put(`/api/documents/${this.id}`,{title:this.resetName})
+          this.$http.put(`http://smart-api.ztzl.com/smart-office/api/documents/${this.id}`,{title:this.resetName})
           .then(response=>{
             const result = response.data;
             if (!result.successful) {
@@ -239,7 +244,7 @@ import _ from 'lodash';
           okText: '确认',
           cancelText: '取消',
           onOk:()=>{
-            this.$http.delete(`/api/documents/${this.id}`)
+            this.$http.delete(`http://smart-api.ztzl.com/smart-office/api/documents/${this.id}`)
             .then(response=>{
               const result = response.data;
               if (!result.successful) {
@@ -258,7 +263,7 @@ import _ from 'lodash';
 
       //回收站还原文档
       resetDoc(){
-        this.$http.put(`/api/documents/${this.id}/status`,{status:1})
+        this.$http.put(`http://smart-api.ztzl.com/smart-office/api/documents/${this.id}/status`,{status:1})
         .then(response=>{
           const result = response.data;
           if (!result.successful) {
@@ -281,7 +286,7 @@ import _ from 'lodash';
       mouseleave(){
         this.iconMenu = false ;
         this.$refs['doc-item'].style.background = '';
-      }
+      },
     },
 
     filters: {
@@ -290,12 +295,14 @@ import _ from 'lodash';
         return moment(time).format('lll'); 
       },
       // 依据文档显示不同的图标
-      formatType:function(type) {
+      formatType:function(url){
+        const index = url.lastIndexOf(".");
+        const type = url.substr(index+1);
         switch(type){
-          case 'docx': return '/image/icon_word.png';
-          case 'xlsx': return '/image/icon_excel.png';
-          case 'pptx': return '/image/icon_ppt.png';
-          case 'pdf': return '/image/icon_pdf.png';
+          case 'docx': return '/smart-office/image/icon_word.png';
+          case 'xlsx': return '/smart-office/image/icon_excel.png';
+          case 'pptx': return '/smart-office/image/icon_ppt.png';
+          case 'pdf': return '/smart-office/image/icon_pdf.png';
         }
       }
     },

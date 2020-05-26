@@ -22,31 +22,6 @@ import ShareSet from '../components/ShareSet'
       DocList,
       ShareSet
     },
-
-    mounted(){
-       //获取config配置
-      this.$http.get('/api/configs')
-      .then((response)=>{
-        const result = response.data;
-        if (!result.successful) {
-          return this.$message.error(result.message);
-        }
-        //加载文档服务API
-          var script = document.createElement("script");
-          script.type="text/javascript";
-          script.src = `${result.data.documentServer}/web-apps/apps/api/documents/api.js`;
-          document.getElementsByTagName('head')[0].appendChild(script);
-          script.onload = ()=>{
-            console.log('[加载文档服务API成功]');
-          }
-          script.onerror = () =>{
-            console.log('[加载文档服务API失败]');
-          }
-      })
-      .catch(error=>{
-          this.$message.error(error.response.data.message);
-      });
-    }
   }
 </script>
 

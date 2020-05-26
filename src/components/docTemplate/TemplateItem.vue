@@ -1,51 +1,55 @@
 <template>
   <div id="template-item" @click="selectTemplate">
-    <img :src="thumbnail" alt="模板图片">
+    <img :src="`http://smart.ztzl.com/smart-hfs/${thumbnail}`" alt="模板图片">
+    <p>{{name}}</p>  
   </div>
 </template>
+
   
 <script type="text/ecmascript-6">
   export default {
     name:'TemplateItem',
-    props:['url','fileType','thumbnail'],
+    props:['url','name','thumbnail','type'],
     methods:{
+      //拿到文件类型
+      getExtname(filename){
+        const index = filename.lastIndexOf(".");
+        return filename.substr(index+1);
+      },
       // 选择模板
       selectTemplate(){
-        this.$http.post('/api/documents',{fileType:this.fileType})
+
+        let fileType = null;
+
+        if (this.type == 'text') {
+          fileType = "新建文档";
+
+        }else if(this.type == 'spreadsheet'){
+          fileType = "新建表格";
+
+        }else if(this.type == 'presentation'){
+          fileType = "新建文稿";
+
+        }else{
+          return this.$message.error("不支持的模板");
+        }
+        const exitname = this.getExtname(this.url);
+        const filename = `${fileType}.${exitname}`;
+
+        this.$http.post('http://smart-api.ztzl.com/smart-office/api/documents',{type:this.type,name:filename,url:this.url})
         .then(response=>{
           const result = response.data;
           if (!result.successful) {
             return this.$message.error(result.message);
           }
-          const serverUrl = `${window.location.protocol}//${window.location.host}`;
-          window.open(`${serverUrl}/editor?${result.data.id}`);
-          //获取所有文档
-          this.$http.get('/api/documents')
-          .then(response=>{
-            const result = response.data;
-            if (!result.successful) {
-              return this.$message.error(result.message);
-            }
-            const data = response.data.rows;
-            this.$events.emit('documentList',data);
-          })
+          window.open(`http://smart.ztzl.com/smart-office/#/editor/${result.data.id}`);
+          
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);
         })
       }
     },
-    mounted(){
-      // 获取文件服务器
-      this.$http.get('/api/configs')
-      .then((response)=>{
-        const result = response.data;
-        if (!result.successful) {
-          return this.$message.error(result.message);
-        }
-        this.fileServer = result.data.fileServer;
-      });
-    }
   }
 </script>
   
@@ -56,8 +60,8 @@
     text-align: center;
   }
   #template-item p{
-    font-size:19px;
+    font-size:16px;
     color:rgba(102,102,102,1);
-    margin-top:2px;
+    margin-top:8px;
   }
 </style>

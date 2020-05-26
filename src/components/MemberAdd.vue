@@ -73,7 +73,7 @@
               {{item.title}}
             </div>
             <img 
-              src="/image/choose_del.png" 
+              src="/smart-office/image/choose_del.png" 
               alt="叉号" 
               style="width:16px;height:16px;margin-top:8px"
               @click="delSelectedMember(item.key)"
@@ -114,17 +114,17 @@
         this.addMemberVisible = addMemberVisible;
       });
       //获取所有文档成员
-      this.$http.get('/api/members')
-      .then(response=>{
-        const result = response.data;
-        if (!result.successful) {
-          return this.$message.error(result.message);
-        }
-        this.members = result.data;
-      })
-      .catch(error=>{
-        this.$message.error(error.response.data.message);
-      })
+      // this.$http.get('/api/members')
+      // .then(response=>{
+      //   const result = response.data;
+      //   if (!result.successful) {
+      //     return this.$message.error(result.message);
+      //   }
+      //   this.members = result.data;
+      // })
+      // .catch(error=>{
+      //   this.$message.error(error.response.data.message);
+      // })
     },
     methods:{
       //关闭添加成员
@@ -214,7 +214,7 @@
   .close{
     width: 12px;
     height: 12px;
-    background-image: url('/image/icon_close.png');
+    background-image: url('/smart-office/image/icon_close.png');
     background-size: cover;
     position:absolute;
     right:0;
@@ -224,7 +224,7 @@
   .confirm{
     width: 66px;
     height: 24px;
-    background-image: url('/image/button_yes.png');
+    background-image: url('/smart-office/image/button_yes.png');
     background-size: cover;
     position:absolute;
     right:0;
@@ -232,12 +232,12 @@
     margin:0 108px 14px 0;
   }
   .confirm:hover{
-    background-image: url('/image/button_yes_s.png');
+    background-image: url('/smart-office/image/button_yes_s.png');
   }
   .cancel{
     width: 66px;
     height: 24px;
-    background-image: url('/image/button_no.png');
+    background-image: url('/smart-office/image/button_no.png');
     background-size: cover;
     position:absolute;
     right:0;
@@ -245,6 +245,6 @@
     margin:0 14px 14px 0;
   }
   .cancel:hover{
-    background-image: url('/image/button_no_s.png');
+    background-image: url('/smart-office/image/button_no_s.png');
   }
 </style>

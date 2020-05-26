@@ -122,7 +122,7 @@
   .close{
     width: 12px;
     height: 12px;
-    background-image: url('/image/icon_close.png');
+    background-image: url('/smart-office/image/icon_close.png');
     background-size: cover;
     position:absolute;
     right:0;
@@ -132,7 +132,7 @@
   .confirm{
     width: 66px;
     height: 24px;
-    background-image: url('/image/button_yes.png');
+    background-image: url('/smart-office/image/button_yes.png');
     background-size: cover;
     position:absolute;
     right:0;
@@ -140,12 +140,12 @@
     margin:0 106px 13px 0;
   }
   .confirm:hover{
-    background-image: url('/image/button_yes_s.png');
+    background-image: url('/smart-office/image/button_yes_s.png');
   }
   .cancel{
     width: 66px;
     height: 24px;
-    background-image: url('/image/button_no.png');
+    background-image: url('/smart-office/image/button_no.png');
     background-size: cover;
     position:absolute;
     right:0;
@@ -153,6 +153,6 @@
     margin:0 13px 13px 0;
   }
   .cancel:hover{
-    background-image: url('/image/button_no_s.png');
+    background-image: url('/smart-office/image/button_no_s.png');
   }
 </style>

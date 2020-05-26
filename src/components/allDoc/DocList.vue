@@ -31,12 +31,12 @@
     <div v-for="(document,index) in documentList" :key="index">
       <DocItem
         :id="document.id"
-        :fileType="document.fileType"
-        :ownerName="document.ownerName"
-        :title="document.title"
+        :type="document.type"
+        :name="document.name"
         :url="document.url"
         :modifyTime="document.modifyTime"
         :status="document.status"
+        :ownerName="document.ownerName"
         :permissions="document.permissions"
         />
     </div>
@@ -98,13 +98,14 @@
       },
       //切换分页
       changePagination(page,pageSize){
-        const url = `/api/documents?start=${(page - 1)* pageSize}&limit=${pageSize}&owner=${this.filters.owner}&status=${this.filters.status}`;
+        const url = `http://smart-api.ztzl.com/smart-office/api/documents?start=${(page - 1)* pageSize}&limit=${pageSize}&owner=${this.filters.owner}&status=${this.filters.status}`;
         this.$http.get(url)
         .then(response=>{
           const result = response.data;
           if (!result.successful) {
             return this.$message.error(result.message);
           }
+          // 所有的文档条数
           this.total = result.data.total;
           this.documentList = result.data.rows;
         })
@@ -114,7 +115,7 @@
       }
     },
     mounted(){
-      //获取所有的文档
+      //获取前10条文档
       this.changePagination(1,10);
       //上传/新建后再次获取文档
       this.$events.on('documentList',()=>{
