@@ -9,12 +9,14 @@ import 'ant-design-vue/dist/antd.css';
 import App from './App.vue';
 import router from './router';
 import EventBus from "@/plugins/EventBus";
+import Editor from '@/plugins/Editor';
 Vue.config.productionTip = false;
 axios.defaults.withCredentials = true;
 
 Vue.use(VueRouter);
 Vue.use(Antd);
 Vue.use(EventBus);
+Vue.use(Editor);
 Vue.use(vueAxios,axios);
 
 // 响应拦截

@@ -44,18 +44,16 @@
         <!-- 树状图 -->
         <a-tree
           checkable
-          :treeData="members"
-          :expandedKeys="expandedKeys"
+          :treeData="groups"
+          @check="onCheck"
           :autoExpandParent="autoExpandParent"
-          v-model="checkedKeys"
-          @expand="onExpand"
           />
 
         <!-- 已选择的成员 -->
         <div style="width:50%;padding:8px 13px 0">
           <p style="font-size:14px;color:rgba(17,204,212,1);margin:0px">已选择</p>
           <div 
-            v-for="(item,index) in selectedMember" 
+            v-for="(member,index) in selectedMembers" 
             :key="index" 
             style="
               line-height:32px;
@@ -70,13 +68,13 @@
               color:rgba(102,102,102,1);
               margin-bottom:10px"
               >
-              {{item.title}}
+              {{member.username}}
             </div>
             <img 
               src="/smart-office/image/choose_del.png" 
               alt="叉号" 
               style="width:16px;height:16px;margin-top:8px"
-              @click="delSelectedMember(item.key)"
+              @click="delSelectedMember(member.key)"
               >
           </div>
         </div>
@@ -97,15 +95,13 @@
       return{
         addMemberVisible:false,
         //可选择的全部成员
-        members:[],
-        //展开指定的树节点
-        expandedKeys: [],
+        groups:[],
         // 自动展开父节点
         autoExpandParent: true,
-        //选中的要添加的成员(key值)
-        checkedKeys: [],
         //右侧展示选中的成员
-        selectedMember:[],
+        selectedMembers:[],
+        //元数据
+        rawData:[],
       }
     },
     mounted(){
@@ -113,83 +109,89 @@
       this.$events.on('addMember',(addMemberVisible)=>{
         this.addMemberVisible = addMemberVisible;
       });
+
       //获取所有文档成员
-      // this.$http.get('/api/members')
-      // .then(response=>{
-      //   const result = response.data;
-      //   if (!result.successful) {
-      //     return this.$message.error(result.message);
-      //   }
-      //   this.members = result.data;
-      // })
-      // .catch(error=>{
-      //   this.$message.error(error.response.data.message);
-      // })
+      this.$http.get('http://smart-api.ztzl.com/smart-auth/api/roles')
+      .then(response=>{
+        const result = response.data;
+        if (!result.successful) {
+          return this.$message.error(result.message);
+        }
+        this.rawData = result.data;
+        this.groups = _.map(result.data,role=>{
+          const group = {};
+          group.key = role.id;
+          group.title = role.name;
+          group.children = _.map(role.userList,(user)=>{
+            return {
+              key:`${role.id}-${user.id}`,
+              title:user.username,
+            };
+          })
+          return group;
+        })
+      })
+      .catch(error=>{
+        this.$message.error(error.response.data.message);
+      })
+
+
+
     },
     methods:{
+      //选中的key
+      onCheck(checkedKeys){
+        // 过滤到最外层的key
+        const checked = _.filter(checkedKeys,(checkedKey)=>{
+          return typeof(checkedKey) == 'string';
+        })
+        //截取到-后面的key
+        const key = _.map(checked,(key)=>{
+          const index = key.lastIndexOf("-");
+          return key.substr(index+1);
+        })
+        const select = _.uniqBy(key);
+        // 根据选择的key找到对应的成员
+        const members = [];
+        _.forEach(this.rawData,(item)=>{
+          _.forEach(select,(key)=>{
+            _.forEach(item.userList,(user)=>{
+              if (key == user.id) {
+                members.push({'key':user.id,'username':user.username});
+              }
+            })
+          })
+        })
+        this.selectedMembers = _.uniqWith(members, _.isEqual);
+      },
       //关闭添加成员
       closeAddMember(){
         //关闭添加成员的遮罩
-        this.addMemberVisible = false;
-        //隐藏共享设置的遮罩
-        this.$events.emit('closeSetModal',false);
+        // this.addMemberVisible = false;
+        // //隐藏共享设置的遮罩
+        // this.$events.emit('closeSetModal',false);
       },
       //确认
       confirm(){
         //关闭添加成员的遮罩
-        this.addMemberVisible = false;
-        //隐藏共享设置的遮罩
-        this.$events.emit('closeSetModal',false);
-        console.log('发送请求前选中的key',this.checkedKeys);
+        // this.addMemberVisible = false;
+        // //隐藏共享设置的遮罩
+        // this.$events.emit('closeSetModal',false);
+        // console.log('发送请求前选中的key',this.checkedKeys);
       },
       //取消
       cancel(){
         //关闭添加成员的遮罩
-        this.addMemberVisible = false;
-      },
-      //展开/收起节点
-      onExpand(expandedKeys) {
-        this.expandedKeys = expandedKeys;
-        this.autoExpandParent = false;
-      },
-      //点击复选框
-      onCheck(checkedKeys) {
-        this.checkedKeys = checkedKeys;
+        // this.addMemberVisible = false;
       },
       //去除右侧已选中的成员
       delSelectedMember(key){
-        const k = _.split(key,'-',1);
-        _.forEach(this.checkedKeys,(checkedKey,index)=>{
-          if (checkedKey == key || checkedKey == k) {
-            this.checkedKeys.splice(index,1);
-          }
-        });
+        const resetMembers = _.filter(this.selectedMembers,(member)=>{
+          return member.key !== key;
+        })
+        this.selectedMembers = resetMembers;
       },
     },
-    //深度监视选中框的状态
-    watch: {
-      checkedKeys(key) {
-        // const members = _.map(this.members,(member,index)=>{
-        //   return member.children;
-        // });
-        // const memberList = [];
-        // _.forEach(members,(members,index)=>{
-        //   _.forEach(members,(member,index)=>{
-        //     memberList.push(member);
-        //   })
-        // })
-        // const selectedMember = [];
-        // _.forEach(key,(key,index)=>{
-        //   _.forEach(memberList,(member,index)=>{
-        //     if (key == member.key) {
-        //       selectedMember.push(member);
-        //     }
-        //   })
-        // })
-        // this.selectedMember = _.uniq(selectedMember);
-        // console.log('选中的成员',this.selectedMember);
-      }
-    }
   }
 </script>
   

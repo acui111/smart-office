@@ -51,19 +51,20 @@
           
           <!-- 每一个文档成员 -->
           <div style='width:100%;height:280px;padding:0 20px;overflow-y:auto'>
-            <div v-for="(item,index) in docMember " :key="index">
+            <div v-for="(docMember,index) in docMembers " :key="index">
               <DocMember
-                :id="item.id"
-                :name="item.username"
-                :owner="item.owner"
+                :id="docMember.id"
+                :userId="docMember.userId"
+                :username="docMember.username"
+                :writeable="docMember.writeable"
+                :readable="docMember.readable"
+                :ownerId="docMember.ownerId"
                 />
             </div>
 
           </div>
         </div>
 
-        <div class="confirm" @click="confirm" />
-        <div class="cancel" @click="cancel" />
       </div>
     </a-modal>
     <MemberAdd/>
@@ -79,7 +80,7 @@
     data(){
       return{
         shareSetVisible:false,
-        docMember:[],
+        docMembers:[],
       }
     },
     components:{
@@ -88,9 +89,19 @@
     },
     mounted(){
       //共享设置显示
-      this.$events.on('shareSetVisible',({shareSetVisible,id,permissions})=>{
+      this.$events.on('shareSetVisible',({shareSetVisible,id})=>{
         this.shareSetVisible = shareSetVisible;
-        this.docMember = _.values(permissions);
+        this.$http.get(`http://smart-api.ztzl.com/smart-office/api/documents/${id}/privileges`)
+        .then(response=>{
+          const result = response.data;
+          if (!result.successful) {
+            return this.$message.error(result.message);
+          }
+          this.docMembers = result.data;
+        })
+        .catch(error=>{
+          this.$message.error(error.response.data.message);
+        });
       });
       //共享设置关闭
       this.$events.on('closeSetModal',(data)=>{
@@ -100,14 +111,6 @@
     methods:{
       //右上角关闭
       closeShareSet(){
-        this.shareSetVisible = false;
-      },
-      //确认
-      confirm(){
-        this.shareSetVisible = false;
-      },
-      //取消
-      cancel(){
         this.shareSetVisible = false;
       },
       //添加文档成员

@@ -41,7 +41,7 @@
       <div class="time">{{ createdTime | formatTime}}</div>
 
       <!-- 文档创建者 -->
-      <div class="creator">{{userName}}</div>
+      <div class="creator">{{ownerName}}</div>
 
       <!-- 多功能按键 -->
       <div @click="clickIconMenu" class="icon-menu">
@@ -58,7 +58,7 @@
         ref="iconMenuSet"
         >
         <template v-if="status">
-          <p @click="toSetModal">共享设置</p>
+          <p @click="toSetModal" v-if="this.ownerId == this.$editor.userId">共享设置</p>
           <p @click="toEdit">编辑</p>
           <p @click="download">下载</p>
           <p @click="removeDoc">删除</p>
@@ -88,7 +88,7 @@ import ClipboardJS from 'clipboard';
 import _ from 'lodash';
   export default {
     name:'DocItem',
-    props:['id','type','name','url','createdTime','userName','status','permissions'],
+    props:['id','type','name','url','createdTime','ownerName','status','ownerId'],
     data(){
       return{
         //多功能按钮
@@ -124,7 +124,7 @@ import _ from 'lodash';
 
       //共享设置
       toSetModal(){
-        this.$events.emit('shareSetVisible',{'shareSetVisible':true,'id':this.id,'permissions':this.permissions});
+        this.$events.emit('shareSetVisible',{'shareSetVisible':true,'id':this.id});
         this.clickIconMenuShow = false;
       },
 

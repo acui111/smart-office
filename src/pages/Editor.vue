@@ -21,7 +21,7 @@ import _ from 'lodash';
             // 文件名
             "title": parms.name,
             // 文件地址
-            "url": `http://smart-hfs:7000/smart-hfs/${parms.url}`,
+            "url": `http://10.144.176.97:7000/smart-hfs/${parms.url}`,
           },
           // 文档类型
           "documentType": parms.type,
@@ -32,7 +32,12 @@ import _ from 'lodash';
             // 语言
             "lang": "zh-cn",
             // 文档可编辑
-            "mode": "view",
+            "mode": (parms.writeable)? 'edit':'view',
+            // 当前用户
+            // "user": {
+            //   "id": parms.userId,
+            //   "name": parms.username,
+            // }
           },
           "height": "100%",
           "width": "100%",
@@ -52,7 +57,6 @@ import _ from 'lodash';
         //合并文档参数
         _.merge(options, result.data);
         options.callbackUrl = 'http://10.144.176.110:8080/smart-office/api/callbackUrl';
-        console.log('options',options);
       })
       .then(()=>{
         //打开相应的文档

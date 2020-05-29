@@ -36,8 +36,8 @@
         :url="document.url"
         :createdTime="document.createdTime"
         :status="document.status"
-        :userName="document.owner.username"
-        :permissions="document.permissions"
+        :ownerName="document.ownerName"
+        :ownerId="document.ownerId"
         />
     </div>
 
@@ -72,6 +72,7 @@
           // 当前文档是否有效
           status:1, 
         },
+        userId:'',
       }
     },
     methods: {
@@ -111,7 +112,7 @@
           if (result.data.rows.length == 0) {
             this.documentList = [];
           }else{
-            this.documentList = result.data.rows[0].documentList;
+            this.documentList = result.data.rows;
           }
         })
         .catch(error=>{
@@ -126,6 +127,18 @@
       this.$events.on('documentList',()=>{
         this.changePagination(1,10);
       });
+      // 获取当前登录用户信息
+      this.$http.get('http://smart-api.ztzl.com/smart-passport/api/checkToken')
+      .then(response=>{
+        const result = response.data;
+        if (!result.successful) {
+          return this.$message.error(result.message);
+        }
+        this.$editor.userId = result.data.userId;
+      })
+      .catch(error=>{
+        this.$message.error(error.response.data.message);
+      })
     }
   }
 </script>
