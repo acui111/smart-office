@@ -32,7 +32,7 @@ import _ from 'lodash';
             // 语言
             "lang": "zh-cn",
             // 文档可编辑
-            "mode": "edit"
+            "mode": "view",
           },
           "height": "100%",
           "width": "100%",
@@ -52,13 +52,14 @@ import _ from 'lodash';
         //合并文档参数
         _.merge(options, result.data);
         options.callbackUrl = 'http://10.144.176.110:8080/smart-office/api/callbackUrl';
+        console.log('options',options);
       })
       .then(()=>{
         //打开相应的文档
         this.openDocment(options);
       })
       .catch(error=>{
-        this.$message.error(error);
+        this.$message.error(error.response.data.message);
       })
     }
   }

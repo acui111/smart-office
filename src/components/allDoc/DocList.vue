@@ -34,9 +34,9 @@
         :type="document.type"
         :name="document.name"
         :url="document.url"
-        :modifyTime="document.modifyTime"
+        :createdTime="document.createdTime"
         :status="document.status"
-        :ownerName="document.ownerName"
+        :userName="document.owner.username"
         :permissions="document.permissions"
         />
     </div>
@@ -98,7 +98,8 @@
       },
       //切换分页
       changePagination(page,pageSize){
-        const url = `http://smart-api.ztzl.com/smart-office/api/documents?start=${(page - 1)* pageSize}&limit=${pageSize}&owner=${this.filters.owner}&status=${this.filters.status}`;
+        this.documentList = [];
+        const url = `http://smart-api.ztzl.com/smart-office/api/documents?offset=${(page - 1)* pageSize}&limit=${pageSize}&owner=${this.filters.owner}&status=${this.filters.status}`;
         this.$http.get(url)
         .then(response=>{
           const result = response.data;
@@ -106,8 +107,12 @@
             return this.$message.error(result.message);
           }
           // 所有的文档条数
-          this.total = result.data.total;
-          this.documentList = result.data.rows;
+          this.total = result.data.count;
+          if (result.data.rows.length == 0) {
+            this.documentList = [];
+          }else{
+            this.documentList = result.data.rows[0].documentList;
+          }
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);

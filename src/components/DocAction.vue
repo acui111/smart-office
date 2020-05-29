@@ -56,14 +56,18 @@
     methods:{
       //新建文档
       toEditWord(){
-        const template = _.find(this.templateList,{name:'新建文档'});
+        const template = _.find(this.templateList,{name:'新建文档.docx'});
+        if (!template) {
+          this.$message.warning('未匹配到文档模板');
+          return;
+        }
         this.$http.post('http://smart-api.ztzl.com/smart-office/api/documents',{type:'text',name:template.name,url:template.url})
         .then(response=>{
           const result = response.data;
           if (!result.successful) {
             return this.$message.error(result.message);
           }
-          // this.$events.emit('documentList');
+          this.$events.emit('documentList');
           window.open(`http://smart.ztzl.com/smart-office/#/editor/${result.data.id}`);
         })
         .catch(error=>{
@@ -72,7 +76,11 @@
       },
       //新建表格
       toEditExcel(){
-        const template = _.find(this.templateList,{name:'新建表格'});
+        const template = _.find(this.templateList,{name:'新建表格.xlsx'});
+        if (!template) {
+          this.$message.warning('未匹配到表格模板');
+          return;
+        }
         this.$http.post('http://smart-api.ztzl.com/smart-office/api/documents',{type:'spreadsheet',name:template.name,url:template.url})
         .then(response=>{
           const result = response.data;
@@ -88,7 +96,11 @@
       },
       //新建PPT
       toEditPPT(){
-        const template = _.find(this.templateList,{name:'新建演示'});
+        const template = _.find(this.templateList,{name:'新建演示.pptx'});
+        if (!template) {
+          this.$message.warning('未匹配到演示模板');
+          return;
+        }
         this.$http.post('http://smart-api.ztzl.com/smart-office/api/documents',{type:'presentation',name:template.name,url:template.url})
         .then(response=>{
           const result = response.data;
@@ -127,6 +139,8 @@
           this.$message.error(`${name}上传失败`);
         }
       },
+
+      // 获取文件类型
       getDocmentType(filename){
         const index = filename.lastIndexOf(".");
         const extname = filename.substr(index+1);
@@ -151,6 +165,7 @@
 
         }
       }
+      
     },
     mounted(){
       this.$http.get('http://smart-api.ztzl.com/smart-office/api/templates')

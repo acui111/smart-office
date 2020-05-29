@@ -4,7 +4,7 @@
       <TemplateItem
         :thumbnail="template.thumbnail"
         :url="template.url"
-        :name="template.name"
+        :name="template.name.split('.')[0]"
         :type="template.type"
         />
     </div>
@@ -33,7 +33,7 @@ import TemplateItem from './TemplateItem'
           return this.$message.error(result.message);
         }
         this.templateList = _.filter(response.data.data,(template)=>{
-          return !_.includes(['新建文档','新建表格','新建演示'],template.name);
+          return !_.includes(['新建文档.docx','新建表格.xlsx','新建演示.pptx'],template.name);
         });
       })
       .catch(error=>{

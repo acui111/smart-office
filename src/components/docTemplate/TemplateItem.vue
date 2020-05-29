@@ -43,7 +43,7 @@
             return this.$message.error(result.message);
           }
           window.open(`http://smart.ztzl.com/smart-office/#/editor/${result.data.id}`);
-          
+          this.$events.emit('documentList');
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);

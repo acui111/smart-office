@@ -23,7 +23,7 @@ axios.interceptors.response.use((response) => {
   }, (error) => {
     // 如果没有登录，重定向到登录页面
     if (error.response.status == 401) {
-      return window.location.href = `http://smart.ztzl.com/smart-passport/?callbackUrl=${window.location.href}`;
+      return window.location.href = `http://smart.ztzl.com/smart-passport/?callbackUrl=${encodeURIComponent(window.location.href)}`;
     }else{
       return Promise.reject(error);
     }

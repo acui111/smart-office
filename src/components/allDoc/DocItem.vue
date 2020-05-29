@@ -38,10 +38,10 @@
       </div>
 
       <!-- 文档创建时间 -->
-      <div class="time">{{ modifyTime | formatTime}}</div>
+      <div class="time">{{ createdTime | formatTime}}</div>
 
       <!-- 文档创建者 -->
-      <div class="creator">{{ownerName}}</div>
+      <div class="creator">{{userName}}</div>
 
       <!-- 多功能按键 -->
       <div @click="clickIconMenu" class="icon-menu">
@@ -88,7 +88,7 @@ import ClipboardJS from 'clipboard';
 import _ from 'lodash';
   export default {
     name:'DocItem',
-    props:['id','type','name','url','modifyTime','ownerName','status','permissions'],
+    props:['id','type','name','url','createdTime','userName','status','permissions'],
     data(){
       return{
         //多功能按钮
@@ -122,19 +122,6 @@ import _ from 'lodash';
         }
       },
 
-      //获取所有的文档
-      getAllDoc(){
-        this.$http.get('http://smart-api.ztzl.com/smart-office/api/documents')
-        .then(response=>{
-          const result = response.data;
-          if (!result.successful) {
-            return this.$message.error(result.message);
-          }
-          const data = response.data.rows;
-          this.$events.emit('documentList',data);
-        })
-      },
-
       //共享设置
       toSetModal(){
         this.$events.emit('shareSetVisible',{'shareSetVisible':true,'id':this.id,'permissions':this.permissions});
@@ -156,15 +143,14 @@ import _ from 'lodash';
       downloadUrlFile(url,name) {
         const type = this.getDocmentType(url);
         const xhr = new XMLHttpRequest();
-        xhr.open('GET', url, true);
+        xhr.open('GET', `http://smart.ztzl.com/smart-hfs/${url}`, true);
         xhr.responseType = 'blob';
         xhr.onload = () => {
           if (xhr.status === 200) {
-            const newName = name + '.' + type;
             var url = URL.createObjectURL(xhr.response);
             var a = document.createElement('a');
             a.href = url;
-            a.download = newName; 
+            a.download = name; 
             a.click();
           }
         };
@@ -179,14 +165,14 @@ import _ from 'lodash';
           okText: '确认',
           cancelText: '取消',
           onOk:()=>{
-            this.$http.put(`http://smart-api.ztzl.com/smart-office/api/documents/${this.id}/status`,{status:0})
+            this.$http.post(`http://smart-api.ztzl.com/smart-office/api/documents/${this.id}/status`,{status:0})
             .then(response=>{
               const result = response.data;
               if (!result.successful) {
                 return this.$message.error(result.message);
               }
               //获取所有文档
-              this.getAllDoc();
+              this.$events.emit('documentList');
             })
             .catch(error=>{
               this.$message.error(error.response.data.message);
@@ -199,7 +185,7 @@ import _ from 'lodash';
 
       //重命名
       resetname(){
-        this.resetName = _.replace(this.title,`.${this.fileType}`,'');
+        this.resetName = _.replace(this.name,`.${this.getDocmentType(this.url)}`,'');
         console.log('点击重命名');
         this.inputShow = true;
         this.clickIconMenuShow = false;
@@ -208,18 +194,18 @@ import _ from 'lodash';
       blur(){
         this.resetName = _.trim(this.resetName);
         if (this.resetName) {
-          this.resetName = `${this.resetName}.${this.fileType}`
-          this.$http.put(`http://smart-api.ztzl.com/smart-office/api/documents/${this.id}`,{title:this.resetName})
+          this.resetName = `${this.resetName}.${this.getDocmentType(this.url)}`
+          this.$http.put(`http://smart-api.ztzl.com/smart-office/api/documents/${this.id}`,{name:this.resetName})
           .then(response=>{
             const result = response.data;
             if (!result.successful) {
               return this.$message.error(result.message);
             }
             this.inputShow = false;
-            const data = response.data.rows;
-            this.$events.emit('documentList',data);
+            this.$events.emit('documentList');
           })
           .catch(error=>{
+            this.$events.emit('documentList');
             this.$message.error(error.response.data.message);
           })
         }else{
@@ -251,7 +237,7 @@ import _ from 'lodash';
                 return this.$message.error(result.message);
               }
               //获取所有文档
-              this.getAllDoc();
+              this.$events.emit('documentList');
             })
             .catch(error=>{
               this.$message.error(error.response.data.message);
@@ -263,14 +249,14 @@ import _ from 'lodash';
 
       //回收站还原文档
       resetDoc(){
-        this.$http.put(`http://smart-api.ztzl.com/smart-office/api/documents/${this.id}/status`,{status:1})
+        this.$http.post(`http://smart-api.ztzl.com/smart-office/api/documents/${this.id}/status`,{status:1})
         .then(response=>{
           const result = response.data;
           if (!result.successful) {
             return this.$message.error(result.message);
           }
           //获取所有文档
-          this.getAllDoc();
+          this.$events.emit('documentList');
         })
         .catch(error=>{
           this.$message.error(error.response.data.message);
@@ -308,13 +294,16 @@ import _ from 'lodash';
     },
     
     mounted(){
-      const clipboard = new ClipboardJS(this.$refs['shareLink']);
-      clipboard.on('success',(e)=> {
-        this.$message.success('链接已复制到剪切板');
-        e.clearSelection();
-      });
-    },
+      if (this.status) {
+        const clipboard = new ClipboardJS(this.$refs['shareLink']);
+        clipboard.on('success',(e)=> {
+          this.$message.success('链接已复制到剪切板');
+          e.clearSelection();
+        });
+      }else{
 
+      }
+    },
   }
 </script>
   
