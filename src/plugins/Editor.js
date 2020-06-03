@@ -3,6 +3,7 @@ export default function (Vue) {
     data(){
       return{
         userId:null,
+        documentId:null,
       }
     }, 
   })

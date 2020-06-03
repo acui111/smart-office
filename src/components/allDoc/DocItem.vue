@@ -108,6 +108,7 @@ import _ from 'lodash';
       }
     },
     methods:{
+      // 获取文档类型
       getDocmentType(url){
         const index = url.lastIndexOf(".");
         return url.substr(index+1);

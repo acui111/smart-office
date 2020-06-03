@@ -37,20 +37,20 @@
       <div style="
         width:100%;
         height:370px;
-        overflow-y:auto;
         display:flex"
         >
 
         <!-- 树状图 -->
         <a-tree
           checkable
+          v-model="selectedKeys"
           :treeData="groups"
           @check="onCheck"
-          :autoExpandParent="autoExpandParent"
+          style="overflow-y:auto"
           />
 
         <!-- 已选择的成员 -->
-        <div style="width:50%;padding:8px 13px 0">
+        <div style="width:50%;padding:8px 13px 0;overflow-y:auto">
           <p style="font-size:14px;color:rgba(17,204,212,1);margin:0px">已选择</p>
           <div 
             v-for="(member,index) in selectedMembers" 
@@ -58,7 +58,7 @@
             style="
               line-height:32px;
               margin-left:8px;
-              display:flex
+              display:flex;
               "
             > 
             <div style="
@@ -93,21 +93,40 @@
     name:'MemberAdd',
     data(){
       return{
+        // 文档id
+        documentId:null,
+        // 添加成员的对话框
         addMemberVisible:false,
-        //可选择的全部成员
+        // 可选择的全部成员
         groups:[],
-        // 自动展开父节点
-        autoExpandParent: true,
-        //右侧展示选中的成员
+        // 选中的key
+        selectedKeys:[],
+        // 右侧展示选中的成员
         selectedMembers:[],
-        //元数据
+        // 请求回来的原数据
         rawData:[],
+        // 已有权限的成员
+        permissionMemebers:[],
+        selected:[],
       }
     },
     mounted(){
       //展示添加成员遮罩
-      this.$events.on('addMember',(addMemberVisible)=>{
+      this.$events.on('addMember',({addMemberVisible,members,documentId})=>{
         this.addMemberVisible = addMemberVisible;
+        this.permissionMemebers = members;
+        this.documentId = documentId;
+        // 判断已有权限的成员（设置特殊样式）
+        _.map(this.permissionMemebers,(permissionMemeber)=>{
+          _.forEach(this.groups,(role)=>{
+            _.forEach(role.children,(user)=>{
+              if (permissionMemeber.username == user.title) {
+                role.disabled = true;
+                user.disableCheckbox = true;
+              }
+            })
+          })
+        })
       });
 
       //获取所有文档成员
@@ -117,7 +136,9 @@
         if (!result.successful) {
           return this.$message.error(result.message);
         }
+        // 请求后的原数据
         this.rawData = result.data;
+        // 将数据处理成树状结构
         this.groups = _.map(result.data,role=>{
           const group = {};
           group.key = role.id;
@@ -133,10 +154,7 @@
       })
       .catch(error=>{
         this.$message.error(error.response.data.message);
-      })
-
-
-
+      });
     },
     methods:{
       //选中的key
@@ -145,6 +163,7 @@
         const checked = _.filter(checkedKeys,(checkedKey)=>{
           return typeof(checkedKey) == 'string';
         })
+        this.selectedKeys = checked;
         //截取到-后面的key
         const key = _.map(checked,(key)=>{
           const index = key.lastIndexOf("-");
@@ -164,32 +183,66 @@
         })
         this.selectedMembers = _.uniqWith(members, _.isEqual);
       },
-      //关闭添加成员
-      closeAddMember(){
-        //关闭添加成员的遮罩
-        // this.addMemberVisible = false;
-        // //隐藏共享设置的遮罩
-        // this.$events.emit('closeSetModal',false);
-      },
-      //确认
-      confirm(){
-        //关闭添加成员的遮罩
-        // this.addMemberVisible = false;
-        // //隐藏共享设置的遮罩
-        // this.$events.emit('closeSetModal',false);
-        // console.log('发送请求前选中的key',this.checkedKeys);
-      },
-      //取消
-      cancel(){
-        //关闭添加成员的遮罩
-        // this.addMemberVisible = false;
-      },
       //去除右侧已选中的成员
       delSelectedMember(key){
+        _.forEach(this.selectedKeys,(selectKey)=>{
+          const selectedKey = selectKey.split('-')[1];
+          if (selectedKey == key) {
+            const selectedKeys = _.filter(this.selectedKeys,(selectedKey)=>{
+              return selectedKey !== selectKey;
+            })
+            this.selectedKeys = selectedKeys;
+          }
+        })
         const resetMembers = _.filter(this.selectedMembers,(member)=>{
           return member.key !== key;
         })
         this.selectedMembers = resetMembers;
+      },
+      //关闭添加成员
+      closeAddMember(){
+        //关闭添加成员的遮罩
+        this.addMemberVisible = false;
+        //隐藏共享设置的遮罩
+        this.$events.emit('closeSetModal',false);
+        this.selectedMembers = [];
+        this.selectedKeys = [];
+      },
+      //确认
+      confirm(){
+        //关闭添加成员的对话框
+        this.addMemberVisible = false;
+        //隐藏共享设置的对话框
+        this.$events.emit('closeSetModal',false);
+        
+        _.map(this.selectedMembers,(selectedMember)=>{
+          selectedMember.writeable = 0;
+          selectedMember.readable = 1;
+          selectedMember.documentId = this.documentId;
+          selectedMember.userId = selectedMember.key;
+          delete selectedMember.key;
+        })
+        
+        this.$http.post(`http://smart-api.ztzl.com/smart-office/api/privileges`,this.selectedMembers)
+        .then(response=>{
+          const result = response.data;
+          if (!result.successful) {
+            return this.$message.error(result.message);
+          }
+          this.$message.success('请求成功');
+        })
+        .catch(error=>{
+          this.$message.error(error.response.data.message);
+        })
+        this.selectedMembers = [];
+        this.selectedKeys = [];
+      },
+      //取消
+      cancel(){
+        //关闭添加成员的遮罩
+        this.addMemberVisible = false;
+        this.selectedMembers = [];
+        this.selectedKeys = [];
       },
     },
   }
@@ -212,6 +265,25 @@
   }
   /deep/ .ant-tree-checkbox-inner:hover{
     border-color: #11CCD4;
+  }
+  /deep/ .ant-tree-checkbox-disabled .ant-tree-checkbox-inner {
+    background-image: url(/smart-office/image/icon.png);
+    background-size: 100% 100%;
+  }
+  /*滚动条凹槽的颜色，还可以设置边框属性 */
+  ::-webkit-scrollbar-track-piece {
+    background-color:#eee;
+    border-radius: 2em;
+  }
+  /*滚动条的宽度*/
+  ::-webkit-scrollbar {
+    width:6px;
+  }
+  /*滚动条的设置*/
+  ::-webkit-scrollbar-thumb {
+    background-color:#ccc;
+    background-clip:padding-box;
+    border-radius: 2em;
   }
   .close{
     width: 12px;

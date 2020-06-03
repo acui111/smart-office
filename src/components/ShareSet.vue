@@ -64,7 +64,6 @@
 
           </div>
         </div>
-
       </div>
     </a-modal>
     <MemberAdd/>
@@ -81,6 +80,7 @@
       return{
         shareSetVisible:false,
         docMembers:[],
+        documentId:null,
       }
     },
     components:{
@@ -88,9 +88,16 @@
       MemberAdd
     },
     mounted(){
+      this.$events.on('docMembers',({docMembers})=>{
+        this.docMembers = docMembers;
+        console.log(this.docMembers);
+      })
       //共享设置显示
       this.$events.on('shareSetVisible',({shareSetVisible,id})=>{
+        this.documentId = id;
+        this.$editor.documentId = id;
         this.shareSetVisible = shareSetVisible;
+        // 获取对该文档有权限的所有成员
         this.$http.get(`http://smart-api.ztzl.com/smart-office/api/documents/${id}/privileges`)
         .then(response=>{
           const result = response.data;
@@ -115,7 +122,7 @@
       },
       //添加文档成员
       addMember(){
-        this.$events.emit('addMember',true);
+        this.$events.emit('addMember',{'addMemberVisible':true,"members":this.docMembers,'documentId':this.documentId});
       }
     }
   }
